@@ -160,7 +160,7 @@ chrome.commands.onCommand.addListener((command) => {
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: 'kairo-capture',
-    title: '⚡ Capture with Kairo',
+    title: 'Capture with Kairo',
     contexts: ['page'],
     documentUrlPatterns: [
       'https://claude.ai/*',

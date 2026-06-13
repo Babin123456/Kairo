@@ -48,18 +48,18 @@ export function platformName(source) {
 }
 
 /**
- * Get a platform icon/emoji from the source key.
+ * Get a short platform label from the source key.
  * @param {string} source
  * @returns {string}
  */
 export function platformIcon(source) {
-  const icons = {
-    claude: '🟠',
-    chatgpt: '🟢',
-    gemini: '🔵',
-    deepseek: '🟣',
+  const labels = {
+    claude: 'CL',
+    chatgpt: 'CG',
+    gemini: 'GM',
+    deepseek: 'DS',
   };
-  return icons[source] || '⚪';
+  return labels[source] || 'UN';
 }
 
 /**

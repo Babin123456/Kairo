@@ -1,118 +1,108 @@
-# ⚡ Kairo — AI Context Saver
+# Kairo
 
-> A cross-browser extension that captures context from AI chat platforms (Claude, ChatGPT, Gemini, DeepSeek) and saves them as reusable "Capsules" — solving context amnesia when switching between AI tools.
+Kairo is a cross-browser extension that captures context from supported AI chat platforms and saves it as reusable capsules. It is designed to reduce repetition when moving between Claude, ChatGPT, Gemini, and DeepSeek.
 
 ## Features
 
-- 🎯 **One-click capture** — Floating button on all supported AI chat pages
-- 🔍 **Smart search** — Filter capsules by title, summary, tags, or platform
-- 💉 **Context injection** — Inject saved context directly into any AI chat input
-- ✨ **AI enrichment** — Optional Claude API integration to auto-extract goals, stack, and decisions
-- 📦 **Export/Import** — Full JSON backup and restore
-- ⌨️ **Keyboard shortcut** — `Ctrl+Shift+S` to capture from anywhere
-- 🌐 **Cross-browser** — Chrome, Firefox, Edge, Brave, Opera
+- One-click capture from supported chat pages
+- Search and filter saved capsules by title, summary, tag, platform, or folder
+- Inject saved context back into a chat input
+- Optional Claude API enrichment for structured metadata
+- JSON export and import for backup and migration
+- Keyboard shortcut support for fast capture
+- Chrome, Firefox, Edge, Brave, and Opera support through the same codebase
 
 ## Supported Platforms
 
 | Platform | Status |
-|----------|--------|
-| Claude (claude.ai) | ✅ |
-| ChatGPT (chat.openai.com / chatgpt.com) | ✅ |
-| Gemini (gemini.google.com) | ✅ |
-| DeepSeek (chat.deepseek.com) | ✅ |
+| --- | --- |
+| Claude (`claude.ai`) | Supported |
+| ChatGPT (`chat.openai.com`, `chatgpt.com`) | Supported |
+| Gemini (`gemini.google.com`) | Supported |
+| DeepSeek (`chat.deepseek.com`) | Supported |
 
-## Quick Start
+## Requirements
+
+- Node.js 18 or newer
+- npm 9 or newer
+- A Chromium-based browser or Firefox for local testing
+
+## Installation
 
 ```bash
-# Install dependencies
 npm install
+```
 
-# Development build (Chrome, with watch)
+## Development
+
+```bash
 npm run dev
+```
 
-# Production build
-npm run build
+This starts a watch build for the Chrome target. For Firefox builds, use:
 
-# Firefox builds
+```bash
 npm run dev:firefox
+```
+
+## Production Builds
+
+```bash
+npm run build
 npm run build:firefox
 ```
 
 ## Loading the Extension
 
-### Chrome / Edge / Brave
-1. Run `npm run build` (or `npm run dev` for development)
-2. Open `chrome://extensions/` (or `edge://extensions/`)
-3. Enable "Developer mode"
-4. Click "Load unpacked"
-5. Select the `dist-chrome/` folder
+### Chrome, Edge, or Brave
+
+1. Run `npm run build`.
+2. Open the browser extensions page.
+3. Enable Developer mode.
+4. Load the `dist-chrome/` folder as an unpacked extension.
 
 ### Firefox
-1. Run `npm run build:firefox`
-2. Open `about:debugging#/runtime/this-firefox`
-3. Click "Load Temporary Add-on"
-4. Select any file in the `dist-firefox/` folder
+
+1. Run `npm run build:firefox`.
+2. Open `about:debugging#/runtime/this-firefox`.
+3. Load the extension from `dist-firefox/`.
+
+## Configuration
+
+Open the extension settings page to configure:
+
+- Claude API key for optional enrichment
+- Automatic enrichment on capture
+- Visibility of the floating capture button
+
+The capture shortcut is `Ctrl+Shift+S`.
 
 ## Project Structure
 
 ```
-kairo/
-├── manifest.json              # MV3 manifest (Chrome base)
-├── manifest.firefox.json      # Firefox overrides
-├── background/
-│   ├── service-worker.js      # Central hub: messaging, storage, API
-│   └── enricher.js            # Claude API enrichment
-├── content/
-│   ├── index.js               # Entry: platform detection + capture flow
-│   ├── injector.js            # Floating button injection
-│   └── extractors/
-│       ├── index.js           # Hostname → extractor router
-│       ├── claude.js          # Claude DOM scraper
-│       ├── chatgpt.js         # ChatGPT DOM scraper
-│       ├── gemini.js          # Gemini DOM scraper
-│       └── deepseek.js        # DeepSeek DOM scraper
-├── popup/
-│   ├── index.html             # Popup shell
-│   └── popup.js               # Capsule list UI (Preact + htm)
-├── options/
-│   ├── index.html             # Settings page shell
-│   └── options.js             # Settings UI (Preact + htm)
-├── shared/
-│   ├── capsule.js             # Data model + validator
-│   ├── storage.js             # chrome.storage.local wrapper
-│   ├── messaging.js           # Message type constants
-│   └── utils.js               # Utilities (timeAgo, truncate, etc.)
-├── assets/icons/              # Extension icons (16, 48, 128)
-├── scripts/
-│   └── generate-icons.js      # Icon generator
-├── vite.config.js             # Build configuration
-└── package.json
+background/        Service worker and enrichment flow
+content/           Content scripts, injectors, and extractors
+options/           Settings UI
+popup/             Capsule browser UI
+shared/            Data model, storage, messaging, and helpers
+assets/            Extension icons and branded assets
+scripts/           Build-time utilities
 ```
 
-## Tech Stack
+## Data Handling
 
-| Layer | Choice |
-|-------|--------|
-| Manifest | MV3 (Chrome base + Firefox overlay) |
-| UI | Preact + htm (~3kb, no build transform needed) |
-| Storage | chrome.storage.local (capsules) + chrome.storage.sync (settings) |
-| Cross-browser | webextension-polyfill |
-| Build | Vite + vite-plugin-web-extension |
-| AI Enrichment | Anthropic Claude API (optional) |
+- Capsules are stored locally in browser storage.
+- Settings are stored in sync storage when the browser supports it.
+- Claude API enrichment is optional and only runs when a user provides an API key.
+- No backend service is required for core extension features.
 
-## Configuration
+## Documentation
 
-### Claude API Enrichment (Optional)
-
-1. Open Kairo Settings (click ⚙ in the popup)
-2. Enter your Anthropic API key
-3. Toggle "Auto-enrich on capture" to automatically extract structured data
-
-### Keyboard Shortcuts
-
-| Action | Shortcut |
-|--------|----------|
-| Capture current chat | `Ctrl+Shift+S` |
+- [Contributing guide](CONTRIBUTING.md)
+- [Code of conduct](CODE_OF_CONDUCT.md)
+- [Security policy](SECURITY.md)
+- [Architecture overview](docs/architecture.md)
+- [Changelog](CHANGELOG.md)
 
 ## License
 

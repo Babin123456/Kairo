@@ -3,7 +3,7 @@
 import { h, render } from 'preact';
 import { useState, useEffect, useCallback } from 'preact/hooks';
 import { html } from 'htm/preact';
-import { timeAgo, truncate, platformName, platformIcon, debounce } from '../shared/utils.js';
+import { timeAgo, truncate, platformName } from '../shared/utils.js';
 
 // ─── Main Popup Component ───────────────────────────────────────
 function Popup() {
@@ -109,19 +109,19 @@ function Popup() {
   return html`
     <!-- Header -->
     <div class="kairo-header">
-      <h1>
-        <span class="logo-icon">⚡</span>
+      <h1 style="display: flex; align-items: center; gap: 8px;">
+        <img src="../assets/brand-logo.png" style="width: 22px; height: 22px; object-fit: contain; filter: brightness(0) invert(1);" />
         Kairo
       </h1>
       <div class="header-actions">
-        <button class="icon-btn" onClick=${openOptions} title="Settings" id="kairo-settings-btn">⚙</button>
+        <button class="icon-btn" onClick=${openOptions} title="Settings" id="kairo-settings-btn">Settings</button>
       </div>
     </div>
 
     <!-- Search -->
     <div class="search-container">
       <div class="search-wrapper">
-        <span class="search-icon">🔍</span>
+        <span class="search-icon">Search</span>
         <input
           class="search-input"
           type="text"
@@ -145,7 +145,7 @@ function Popup() {
             key=${p}
             class="filter-chip ${activePlatform === p ? 'active' : ''}"
             onClick=${() => setActivePlatform(activePlatform === p ? null : p)}
-          >${platformIcon(p)} ${platformName(p)}</button>
+          >${platformName(p)}</button>
         `)}
       </div>
     `}
@@ -158,7 +158,7 @@ function Popup() {
             key=${f}
             class="filter-chip ${activeFolder === f ? 'active' : ''}"
             onClick=${() => setActiveFolder(activeFolder === f ? null : f)}
-          >📁 ${f}</button>
+          >Folder: ${f}</button>
         `)}
       </div>
     `}
@@ -173,17 +173,17 @@ function Popup() {
     <div class="capsule-list" id="kairo-capsule-list">
       ${loading && html`
         <div class="empty-state">
-          <div class="empty-icon">⏳</div>
-          <div class="empty-title">Loading…</div>
+          <div class="empty-icon">Loading</div>
+          <div class="empty-title">Loading</div>
         </div>
       `}
 
       ${!loading && sorted.length === 0 && html`
         <div class="empty-state">
-          <div class="empty-icon">💊</div>
+          <div class="empty-icon">None</div>
           <div class="empty-title">No capsules yet</div>
           <div class="empty-desc">
-            Visit any AI chat and click the<br/>⚡ Capture button to save context.
+            Visit any AI chat and click the capture button to save context.
           </div>
         </div>
       `}
@@ -244,15 +244,15 @@ function CapsuleCard({ capsule, onCopy, onInject, onDelete }) {
     <div class="capsule-card" id="capsule-${c.id?.slice(0, 8)}">
       <div class="card-header">
         <div class="card-title">${c.title || 'Untitled Capsule'}</div>
-        ${c.meta?.pinned && html`<span class="card-pin">📌</span>`}
+        ${c.meta?.pinned && html`<span class="card-pin">Pinned</span>`}
       </div>
 
       <div class="card-meta">
         <span class="platform-badge ${c.source}">
-          ${platformIcon(c.source)} ${platformName(c.source)}
+          ${platformName(c.source)}
         </span>
         ${c.meta?.enriched && html`
-          <span class="enriched-badge">✨ Enriched</span>
+          <span class="enriched-badge">Enriched</span>
         `}
         <span class="card-date">${timeAgo(c.capturedAt)}</span>
       </div>
@@ -269,13 +269,13 @@ function CapsuleCard({ capsule, onCopy, onInject, onDelete }) {
 
       <div class="card-actions">
         <button class="card-btn" onClick=${() => onCopy(c)} title="Copy to clipboard">
-          📋 Copy
+          Copy
         </button>
         <button class="card-btn inject" onClick=${() => onInject(c)} title="Inject into chat">
-          💉 Inject
+          Inject
         </button>
         <button class="card-btn delete" onClick=${onDelete} title="Delete capsule">
-          🗑
+          Delete
         </button>
       </div>
     </div>

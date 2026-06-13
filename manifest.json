@@ -37,9 +37,9 @@
   "action": {
     "default_popup": "popup/index.html",
     "default_icon": {
-      "16": "assets/icons/icon16.png",
-      "48": "assets/icons/icon48.png",
-      "128": "assets/icons/icon128.png"
+      "16": "assets/brand-logo.png",
+      "48": "assets/brand-logo.png",
+      "128": "assets/brand-logo.png"
     }
   },
   "options_ui": {
@@ -53,9 +53,9 @@
     }
   },
   "icons": {
-    "16": "assets/icons/icon16.png",
-    "48": "assets/icons/icon48.png",
-    "128": "assets/icons/icon128.png"
+    "16": "assets/brand-logo.png",
+    "48": "assets/brand-logo.png",
+    "128": "assets/brand-logo.png"
   },
   "web_accessible_resources": [
     {

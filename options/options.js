@@ -38,11 +38,11 @@ function OptionsPage() {
   const handleSave = () => {
     chrome.runtime.sendMessage({ type: 'SAVE_SETTINGS', settings }, (res) => {
       if (res?.success) {
-        showToast('✅ Settings saved successfully');
+        showToast('Settings saved successfully');
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
       } else {
-        showToast('❌ Failed to save settings');
+        showToast('Failed to save settings');
       }
     });
   };
@@ -69,7 +69,7 @@ function OptionsPage() {
       a.download = `kairo-capsules-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
-      showToast(`📦 Exported ${capsules.length} capsules`);
+      showToast(`Exported ${capsules.length} capsules`);
     });
   };
 
@@ -89,14 +89,14 @@ function OptionsPage() {
         const capsules = parsed.capsules || parsed;
 
         if (!Array.isArray(capsules)) {
-          showToast('❌ Invalid file format');
+          showToast('Invalid file format');
           return;
         }
 
         let imported = 0;
         const saveNext = (i) => {
           if (i >= capsules.length) {
-            showToast(`📥 Imported ${imported} capsules`);
+            showToast(`Imported ${imported} capsules`);
             setCapsuleCount(prev => prev + imported);
             return;
           }
@@ -113,7 +113,7 @@ function OptionsPage() {
         saveNext(0);
       } catch (err) {
         console.error('[Kairo Options] Import error:', err);
-        showToast('❌ Failed to parse import file');
+        showToast('Failed to parse import file');
       }
     };
     reader.readAsText(file);
@@ -122,15 +122,15 @@ function OptionsPage() {
 
   // Clear all data
   const handleClearAll = () => {
-    if (!confirm('⚠️ This will permanently delete ALL capsules. Are you sure?')) return;
+    if (!confirm('This will permanently delete all capsules. Are you sure?')) return;
     if (!confirm('This is your last chance. Delete everything?')) return;
 
     chrome.runtime.sendMessage({ type: 'CLEAR_ALL' }, (res) => {
       if (res?.success) {
         setCapsuleCount(0);
-        showToast('🗑️ All capsules deleted');
+        showToast('All capsules deleted');
       } else {
-        showToast('❌ Failed to clear data');
+        showToast('Failed to clear data');
       }
     });
   };
@@ -139,14 +139,17 @@ function OptionsPage() {
     <div class="options-container">
 
       <!-- Header -->
-      <div class="options-header">
-        <h1>⚡ Kairo Settings</h1>
-        <p>Configure your AI context capture workflow. ${capsuleCount > 0 ? `You have ${capsuleCount} saved capsules.` : ''}</p>
+      <div class="options-header" style="display: flex; align-items: center; gap: 14px; margin-bottom: 40px;">
+        <img src="../assets/brand-logo.png" style="width: 46px; height: 46px; object-fit: contain; filter: brightness(0) invert(1);" />
+        <div>
+          <h1 style="font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; background: linear-gradient(135deg, #6c47ff, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Kairo Settings</h1>
+          <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.5;">Configure your AI context capture workflow. ${capsuleCount > 0 ? `You have ${capsuleCount} saved capsules.` : ''}</p>
+        </div>
       </div>
 
       <!-- API Key Section -->
       <div class="section" id="section-api">
-        <div class="section-title">🔑 Claude API Key</div>
+        <div class="section-title">Claude API Key</div>
         <div class="section-desc">
           Required for AI-powered context enrichment. Your key is stored securely in browser sync storage and never sent to any server except Anthropic's API.
         </div>
@@ -165,7 +168,7 @@ function OptionsPage() {
 
       <!-- Toggles Section -->
       <div class="section" id="section-toggles">
-        <div class="section-title">⚙️ Behavior</div>
+        <div class="section-title">Behavior</div>
         <div class="section-desc">Control how Kairo works on AI chat pages.</div>
 
         <div class="toggle-row">
@@ -187,7 +190,7 @@ function OptionsPage() {
         <div class="toggle-row">
           <div class="toggle-info">
             <div class="toggle-label">Show floating capture button</div>
-            <div class="toggle-desc">Display the ⚡ Capture button on supported AI chat pages. You can still use Ctrl+Shift+S even if this is off.</div>
+            <div class="toggle-desc">Display the capture button on supported AI chat pages. You can still use Ctrl+Shift+S even if this is off.</div>
           </div>
           <label class="toggle-switch">
             <input
@@ -204,20 +207,20 @@ function OptionsPage() {
       <!-- Save Button -->
       <div style="margin-bottom: 20px;">
         <button class="btn btn-primary" onClick=${handleSave} id="save-settings-btn">
-          ${saved ? '✅ Saved!' : '💾 Save Settings'}
+          ${saved ? 'Saved!' : 'Save Settings'}
         </button>
       </div>
 
       <!-- Data Management -->
       <div class="section" id="section-data">
-        <div class="section-title">📦 Data Management</div>
+        <div class="section-title">Data Management</div>
         <div class="section-desc">Export your capsules for backup or import from a previous export.</div>
         <div class="btn-row">
           <button class="btn" onClick=${handleExport} id="export-btn">
-            📤 Export All Capsules
+            Export All Capsules
           </button>
           <button class="btn" onClick=${handleImport} id="import-btn">
-            📥 Import from JSON
+            Import from JSON
           </button>
           <input
             class="file-input"
@@ -231,16 +234,16 @@ function OptionsPage() {
 
       <!-- Danger Zone -->
       <div class="section danger-section" id="section-danger">
-        <div class="section-title">⚠️ Danger Zone</div>
+        <div class="section-title">Danger Zone</div>
         <div class="section-desc">Irreversible actions. Proceed with caution.</div>
         <button class="btn btn-danger" onClick=${handleClearAll} id="clear-all-btn">
-          🗑️ Delete All Capsules
+          Delete All Capsules
         </button>
       </div>
 
       <!-- Keyboard Shortcuts Info -->
       <div class="section" id="section-shortcuts">
-        <div class="section-title">⌨️ Keyboard Shortcuts</div>
+        <div class="section-title">Keyboard Shortcuts</div>
         <div class="section-desc">Quick access shortcuts for Kairo.</div>
         <div class="toggle-row" style="border-bottom: none;">
           <div class="toggle-info">
@@ -261,7 +264,7 @@ function OptionsPage() {
 
       <!-- Version Footer -->
       <div class="version-footer">
-        Kairo v1.0.0 — Built for context that travels with you.
+        Kairo v1.0.0 - Built for context that travels with you.
       </div>
     </div>
 

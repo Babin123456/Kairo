@@ -67,12 +67,12 @@ export function injectButton(onCapture) {
 
   // Capture Option
   const captureOpt = document.createElement('button');
-  captureOpt.textContent = '➕ Capture';
+  captureOpt.textContent = 'Capture';
   styleMenuOption(captureOpt);
 
   // Inject Option
   const injectOpt = document.createElement('button');
-  injectOpt.textContent = '💉 Inject';
+  injectOpt.textContent = 'Inject';
   styleMenuOption(injectOpt);
 
   // Inject Modal (to pick capsule)
@@ -128,16 +128,16 @@ export function injectButton(onCapture) {
     try {
       const success = await onCapture();
       if (success === false) {
-        captureOpt.textContent = '➕ Capture';
+        captureOpt.textContent = 'Capture';
         return;
       }
-      captureOpt.textContent = '✅ Saved!';
+      captureOpt.textContent = 'Saved';
     } catch (err) {
-      captureOpt.textContent = '❌ Failed';
+      captureOpt.textContent = 'Failed';
       console.error('[Kairo] Capture error:', err);
     }
     setTimeout(() => {
-      captureOpt.textContent = '➕ Capture';
+      captureOpt.textContent = 'Capture';
       menu.style.display = 'none';
     }, 2000);
   });
@@ -333,7 +333,7 @@ function injectTextAndSend(text) {
       triggerSend();
     }, 150);
   } else {
-    alert('Could not find input box to inject.');
+    alert('Could not find an input box to inject into.');
   }
 }
 
@@ -437,7 +437,7 @@ export function promptCapsuleName() {
     `;
 
     const icon = document.createElement('span');
-    icon.textContent = '⚡';
+    icon.textContent = 'K';
     icon.style.cssText = `
       font-size: 20px;
       background: linear-gradient(135deg, #6c47ff 0%, #8b6aff 100%);
@@ -589,7 +589,7 @@ export function promptCapsuleName() {
         input.style.borderColor = '#ef4444';
         input.style.boxShadow = '0 0 0 2px rgba(239, 68, 68, 0.2)';
         input.style.animation = 'kairo-shake 0.3s ease';
-        errorMsg.textContent = '⚠️ Capsule name is mandatory!';
+        errorMsg.textContent = 'Capsule name is required.';
         errorMsg.style.display = 'block';
 
         setTimeout(() => {
