@@ -3,6 +3,7 @@
 import { h, render } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
 import { html } from 'htm/preact';
+import { prepareCapsuleImport } from '../shared/import.js';
 
 function OptionsPage() {
   const [settings, setSettings] = useState({
@@ -86,35 +87,59 @@ function OptionsPage() {
     reader.onload = (evt) => {
       try {
         const parsed = JSON.parse(evt.target.result);
-        const capsules = parsed.capsules || parsed;
 
-        if (!Array.isArray(capsules)) {
-          showToast('Invalid file format');
-          return;
-        }
+        chrome.runtime.sendMessage({ type: 'GET_CAPSULES' }, (existingCapsules) => {
+          const { capsules, stats, error } = prepareCapsuleImport(
+            parsed,
+            Array.isArray(existingCapsules) ? existingCapsules : []
+          );
 
-        let imported = 0;
-        const saveNext = (i) => {
-          if (i >= capsules.length) {
-            showToast(`Imported ${imported} capsules`);
-            setCapsuleCount(prev => prev + imported);
+          if (error) {
+            showToast(error);
             return;
           }
-          chrome.runtime.sendMessage({
-            type: 'SAVE_CAPSULE',
-            capsule: capsules[i],
-            options: { enrich: false },
-          }, (res) => {
-            if (res?.success) imported++;
-            saveNext(i + 1);
-          });
-        };
 
-        saveNext(0);
+          if (!capsules.length) {
+            const details = [
+              stats.duplicate ? `${stats.duplicate} duplicate` : '',
+              stats.invalid ? `${stats.invalid} invalid` : '',
+            ].filter(Boolean).join(', ');
+            showToast(details ? `No capsules imported (${details})` : 'No capsules to import');
+            return;
+          }
+
+          let imported = 0;
+          let failed = 0;
+          const saveNext = (i) => {
+            if (i >= capsules.length) {
+              setCapsuleCount(prev => prev + imported);
+              const skipped = stats.duplicate + stats.invalid;
+              const skippedText = skipped ? `, skipped ${skipped}` : '';
+              const failedText = failed ? `, ${failed} failed` : '';
+              showToast(`Imported ${imported} capsule${imported === 1 ? '' : 's'}${skippedText}${failedText}`);
+              return;
+            }
+
+            chrome.runtime.sendMessage({
+              type: 'SAVE_CAPSULE',
+              capsule: capsules[i],
+              options: { enrich: false },
+            }, (res) => {
+              if (res?.success) imported++;
+              else failed++;
+              saveNext(i + 1);
+            });
+          };
+
+          saveNext(0);
+        });
       } catch (err) {
         console.error('[Kairo Options] Import error:', err);
         showToast('Failed to parse import file');
       }
+    };
+    reader.onerror = () => {
+      showToast('Failed to read import file');
     };
     reader.readAsText(file);
     e.target.value = ''; // reset file input
