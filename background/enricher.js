@@ -1,5 +1,7 @@
 // background/enricher.js — Claude API enrichment for raw capsule data
 
+const DEFAULT_MODEL = 'claude-sonnet-4-20250514';
+
 /**
  * Extracts the first balanced top-level JSON object ({ ... }) from a string that
  * may contain surrounding prose or markdown code fences. Returns the object
@@ -104,7 +106,7 @@ ${rawText}
         'anthropic-dangerous-direct-browser-access': 'true',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: DEFAULT_MODEL,
         max_tokens: 800,
         messages: [{ role: 'user', content: prompt }],
       }),
