@@ -34,6 +34,27 @@
       --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
+    body.light-theme {
+      --bg-primary: #f3f3f6;
+      --bg-secondary: #ffffff;
+      --bg-card: #ffffff;
+      --bg-card-hover: #f9f9fb;
+      --bg-input: #eaeaef;
+      --border-subtle: rgba(0, 0, 0, 0.08);
+      --border-focused: rgba(108, 71, 255, 0.6);
+      --text-primary: #1e1e2d;
+      --text-secondary: #5e5e73;
+      --text-muted: #8c8c9e;
+      --accent-glow: rgba(108, 71, 255, 0.15);
+    }
+    
+    body.light-theme .icon-btn, 
+    body.light-theme .card-btn,
+    body.light-theme .search-input,
+    body.light-theme .filter-chip {
+      background: #ffffff;
+    }
+
     /* ─── Reset + Base ───────────────────────────────────────── */
     *, *::before, *::after {
       box-sizing: border-box;
@@ -41,15 +62,27 @@
       padding: 0;
     }
 
-    html, body {
+    html {
       width: 380px;
-      min-height: 500px;
+      height: 500px;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
       font-family: var(--font);
       font-size: 13px;
       background: var(--bg-primary);
       color: var(--text-primary);
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
 
     /* ─── Scrollbar ──────────────────────────────────────────── */
@@ -198,7 +231,7 @@
     /* ─── Capsule List ────────────────────────────────────────── */
     .capsule-list {
       padding: 0 12px 12px;
-      max-height: 380px;
+      flex: 1;
       overflow-y: auto;
       scroll-behavior: smooth;
     }

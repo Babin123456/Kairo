@@ -117,10 +117,30 @@ export async function getSettings() {
       autoEnrich: false,
       showFloatingButton: true,
       apiKey: '',
+      locale: 'en',
+      theme: 'dark',
+      autoTag: false,
+      notionEnabled: false,
+      notionToken: '',
+      notionDbId: '',
+      experimentalMerge: false,
+      experimentalDebug: false,
     };
   } catch (err) {
     console.error('[Kairo] Settings read error:', err);
-    return { autoEnrich: false, showFloatingButton: true, apiKey: '' };
+    return {
+      autoEnrich: false,
+      showFloatingButton: true,
+      apiKey: '',
+      locale: 'en',
+      theme: 'dark',
+      autoTag: false,
+      notionEnabled: false,
+      notionToken: '',
+      notionDbId: '',
+      experimentalMerge: false,
+      experimentalDebug: false,
+    };
   }
 }
 

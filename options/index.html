@@ -30,6 +30,32 @@
       --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
+    body.light-theme {
+      --bg-primary: #f4f4f7;
+      --bg-secondary: #ffffff;
+      --bg-card: #ffffff;
+      --bg-input: #eaeaef;
+      --border-subtle: rgba(0, 0, 0, 0.08);
+      --border-focused: rgba(108, 71, 255, 0.6);
+      --text-primary: #1f1f2e;
+      --text-secondary: #5c5c70;
+      --text-muted: #8e8e9f;
+      --accent-glow: rgba(108, 71, 255, 0.15);
+    }
+
+    body.light-theme .toggle-slider {
+      background: rgba(0, 0, 0, 0.08);
+    }
+
+    body.light-theme .toggle-slider::before {
+      background: #a0a0b0;
+    }
+
+    body.light-theme .btn {
+      background: #ffffff;
+    }
+
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
