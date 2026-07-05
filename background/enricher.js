@@ -59,8 +59,9 @@ function extractJsonObject(text) {
  */
 export async function enrichCapsule(capsule) {
   try {
-    const settings = await chrome.storage.sync.get('kairo_settings');
-    const apiKey = settings.kairo_settings?.apiKey;
+    const settingsObj = await chrome.storage.sync.get('kairo_settings');
+    const apiKey = settingsObj.kairo_settings?.apiKey;
+    const autoTag = settingsObj.kairo_settings?.autoTag === true;
 
     if (!apiKey) {
       console.warn('[Kairo Enricher] No API key configured — skipping enrichment');
@@ -87,9 +88,10 @@ Given this AI conversation, extract:
 - constraints: Array of any technical or business constraints mentioned
 - stack: Array of technologies, frameworks, or tools mentioned
 - keyDecisions: Array of any decisions or conclusions reached
+- tags: Array of 2-4 short, relevant tags (lowercase, e.g. ["react", "auth", "bug-fix"]) based on the technology or topic of the conversation
 
 Respond ONLY with valid JSON matching this shape:
-{ "title": "", "summary": "", "goals": [], "constraints": [], "stack": [], "keyDecisions": [] }
+{ "title": "", "summary": "", "goals": [], "constraints": [], "stack": [], "keyDecisions": [], "tags": [] }
 
 Conversation:
 ${rawText}
@@ -114,7 +116,7 @@ ${rawText}
 
     if (!response.ok) {
       console.error('[Kairo Enricher] API error:', response.status, response.statusText);
-      throw new Error(`API error: ${response.status} ${response.statusText}`);
+      return capsule;
     }
 
     const data = await response.json();
@@ -153,10 +155,16 @@ ${rawText}
         stack: enriched.stack || capsule.content.stack,
         keyDecisions: enriched.keyDecisions || capsule.content.keyDecisions,
       },
-      meta: { ...capsule.meta, enriched: true },
+      meta: { 
+        ...capsule.meta, 
+        enriched: true,
+        tags: autoTag && Array.isArray(enriched.tags)
+          ? Array.from(new Set([...(capsule.meta?.tags || []), ...enriched.tags]))
+          : (capsule.meta?.tags || [])
+      },
     };
   } catch (err) {
     console.error('[Kairo Enricher] Enrichment failed:', err);
-    throw err;
+    return capsule;
   }
 }
