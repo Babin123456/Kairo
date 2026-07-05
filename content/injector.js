@@ -160,6 +160,11 @@ export function injectButton(onCapture) {
     modal.innerHTML = '<div style="color:#aaa; font-size:12px; text-align:center;">Loading...</div>';
 
     chrome.runtime.sendMessage({ type: 'GET_CAPSULES' }, (capsules) => {
+      if (chrome.runtime.lastError) {
+        console.error('[Kairo] GET_CAPSULES failed:', chrome.runtime.lastError.message);
+        modal.innerHTML = '<div style="color:#aaa; font-size:12px; text-align:center;">Could not load capsules.</div>';
+        return;
+      }
       if (!capsules || capsules.length === 0) {
         modal.innerHTML = '<div style="color:#aaa; font-size:12px; text-align:center;">No capsules found.</div>';
         return;
@@ -218,6 +223,26 @@ export function injectButton(onCapture) {
   // Expose the capture trigger for keyboard shortcut + context menu.
   // The service worker invokes this inside the content script isolated world.
   window.__kairoTriggerCapture = runCapture;
+}
+
+// Registers the global capture trigger used by the keyboard shortcut and the
+// context menu, independent of the floating button. index.js calls this when the
+// button is hidden so Ctrl+Shift+S and "Capture with Kairo" keep working (#50).
+// When the button is shown, injectButton() installs its own button-aware trigger
+// (with in-menu status feedback), which is the desired richer behavior.
+export function registerCaptureTrigger(onCapture) {
+  let capturing = false;
+  window.__kairoTriggerCapture = async () => {
+    if (capturing) return;
+    capturing = true;
+    try {
+      await onCapture();
+    } catch (err) {
+      console.error('[Kairo] Capture error:', err);
+    } finally {
+      capturing = false;
+    }
+  };
 }
 
 function styleMenuOption(opt) {
