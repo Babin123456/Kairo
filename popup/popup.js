@@ -356,6 +356,15 @@ function CapsuleCard({ capsule, locale, notionEnabled, onCopy, onInject, onNotio
   const c = capsule;
   const summaryText = c.content?.summary || c.content?.rawSnippet || '';
 
+  const turnCount = c.content?.rawTurns?.length || 0;
+  const wordCount = (() => {
+    const text = c.content?.rawSnippet || c.content?.rawTurns?.map(t => t.text).join(' ') || '';
+    return text.trim() ? text.trim().split(/\s+/).length : 0;
+  })();
+
+  const turnsText = turnCount === 1 ? t('turnBadge', locale) : t('turnsBadge', locale, { count: turnCount });
+  const wordsText = wordCount === 1 ? t('wordBadge', locale) : t('wordsBadge', locale, { count: wordCount });
+
   return html`
     <div class="capsule-card" id="capsule-${c.id?.slice(0, 8)}">
       <div class="card-header">
@@ -373,6 +382,7 @@ function CapsuleCard({ capsule, locale, notionEnabled, onCopy, onInject, onNotio
           <span class="enriched-badge">${t('badgeEnriched', locale)}</span>
         `}
         <span class="card-date">${timeAgo(c.capturedAt, locale)}</span>
+        <span class="card-date" style="margin-left: 8px;">• ${turnsText} • ${wordsText}</span>
       </div>
 
       ${summaryText && html`
