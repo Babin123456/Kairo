@@ -454,4 +454,100 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   }
 });
 
+// Copy text to clipboard in background page/active tab
+async function copyToClipboard(tabId, text) {
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      func: (txt) => {
+        const textarea = document.createElement('textarea');
+        textarea.value = txt;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      },
+      args: [text],
+    });
+    return true;
+  } catch (err) {
+    console.error('[Kairo SW] Failed to copy to clipboard via script execution:', err);
+    return false;
+  }
+}
+
+// ─── Omnibox Search & Copy ────────────────────────────────────────
+chrome.omnibox.onInputChanged.addListener(async (text, suggest) => {
+  try {
+    const capsules = await getCapsules();
+    const query = text.trim().toLowerCase();
+    const filtered = capsules.filter(c => 
+      (c.title || '').toLowerCase().includes(query) ||
+      (c.content?.summary || '').toLowerCase().includes(query)
+    ).slice(0, 5);
+
+    const suggestions = filtered.map(c => ({
+      content: c.id,
+      description: `Kairo: ${c.title || 'Untitled'} - ${c.content?.summary?.slice(0, 50) || 'no summary'}`
+    }));
+
+    suggest(suggestions);
+  } catch (err) {
+    console.error('[Kairo SW] Omnibox error:', err);
+  }
+});
+
+chrome.omnibox.onInputEntered.addListener(async (text) => {
+  try {
+    const capsules = await getCapsules();
+    let capsule = capsules.find(c => c.id === text);
+    if (!capsule && text) {
+      // Fallback: prefix match
+      capsule = capsules.find(c => (c.title || '').toLowerCase().includes(text.toLowerCase()));
+    }
+    if (!capsule) return;
+
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.id) return;
+
+    const settings = await getSettings();
+    const template = settings?.injectionTemplate;
+    
+    let formattedText = '';
+    if (capsule.content?.summary) {
+      const goals = (capsule.content.goals || []).join(', ');
+      const stack = (capsule.content.stack || []).join(', ');
+      const keyDecisions = (capsule.content.keyDecisions || []).join(', ');
+      const constraints = (capsule.content.constraints || []).join(', ');
+
+      if (template && template.trim()) {
+        let txt = template;
+        txt = txt.replace(/{title}/g, capsule.title || 'Untitled');
+        txt = txt.replace(/{summary}/g, capsule.content.summary || '');
+        txt = txt.replace(/{goals}/g, goals || '');
+        txt = txt.replace(/{stack}/g, stack || '');
+        txt = txt.replace(/{keyDecisions}/g, keyDecisions || '');
+        txt = txt.replace(/{constraints}/g, constraints || '');
+        formattedText = txt;
+      } else {
+        formattedText = `[Context from Kairo]\n\n${capsule.content.summary}\n\nGoals: ${goals}\n\nStack: ${stack}\n\nKey Decisions: ${keyDecisions}`;
+      }
+    } else {
+      formattedText = capsule.content?.rawSnippet || '';
+    }
+
+    const success = await copyToClipboard(tab.id, formattedText);
+    if (success) {
+      chrome.notifications.create('kairo-omnibox-copied', {
+        type: 'basic',
+        iconUrl: chrome.runtime.getURL('assets/brand-logo.png'),
+        title: 'Kairo Context Copied',
+        message: `Successfully copied context from "${capsule.title || 'Untitled'}"`,
+      });
+    }
+  } catch (err) {
+    console.error('[Kairo SW] Omnibox input entered failed:', err);
+  }
+});
+
 console.log('[Kairo SW] Service worker initialized');

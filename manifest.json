@@ -46,6 +46,9 @@
       "128": "assets/brand-logo.png"
     }
   },
+  "omnibox": {
+    "keyword": "k"
+  },
   "options_ui": {
     "page": "options/index.html",
     "open_in_tab": true
