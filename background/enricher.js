@@ -97,7 +97,9 @@ Conversation:
 ${rawText}
     `.trim();
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const apiEndpoint = settingsObj.kairo_settings?.apiEndpoint || 'https://api.anthropic.com/v1/messages';
+
+    const response = await fetch(apiEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
