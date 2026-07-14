@@ -418,6 +418,13 @@ function trackInputArea() {
   const domObserver = new MutationObserver(scheduleUpdate);
   domObserver.observe(document.body, { childList: true, subtree: true });
 
+  window.addEventListener('beforeunload', () => {
+    domObserver.disconnect();
+    if (inputResizeObserver) {
+      inputResizeObserver.disconnect();
+    }
+  });
+
   // Initial placement.
   scheduleUpdate();
 }
