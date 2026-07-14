@@ -120,6 +120,22 @@ function Popup() {
     });
   }, []);
 
+  // ─── Pin/Unpin Capsule ──────────────────────────────────────
+  const handlePin = useCallback((c) => {
+    const isPinned = !c.meta?.pinned;
+    const updatedMeta = { ...(c.meta || {}), pinned: isPinned };
+    chrome.runtime.sendMessage({
+      type: 'UPDATE_CAPSULE',
+      id: c.id,
+      updates: { meta: updatedMeta },
+    }, (res) => {
+      if (res?.success) {
+        setCapsules(prev => prev.map(cap => cap.id === c.id ? { ...cap, meta: updatedMeta } : cap));
+        showToast(isPinned ? 'Capsule pinned' : 'Capsule unpinned');
+      }
+    });
+  }, []);
+
   // ─── Delete capsule ────────────────────────────────────────
   const handleDelete = useCallback((id) => {
     chrome.runtime.sendMessage({ type: 'DELETE_CAPSULE', id }, (res) => {
@@ -273,6 +289,7 @@ function Popup() {
           onCopy=${handleCopy}
           onInject=${handleInject}
           onNotion=${handleNotionExport}
+          onPin=${handlePin}
           onDelete=${() => setDeleteTarget(c.id)}
         />
       `)}
@@ -315,7 +332,7 @@ function Popup() {
 }
 
 // ─── Capsule Card Component ─────────────────────────────────────
-function CapsuleCard({ capsule, locale, notionEnabled, onCopy, onInject, onNotion, onDelete }) {
+function CapsuleCard({ capsule, locale, notionEnabled, onCopy, onInject, onNotion, onPin, onDelete }) {
   const c = capsule;
   const summaryText = c.content?.summary || c.content?.rawSnippet || '';
 
@@ -323,7 +340,9 @@ function CapsuleCard({ capsule, locale, notionEnabled, onCopy, onInject, onNotio
     <div class="capsule-card" id="capsule-${c.id?.slice(0, 8)}">
       <div class="card-header">
         <div class="card-title">${c.title || t('untitledCapsule', locale)}</div>
-        ${c.meta?.pinned && html`<span class="card-pin">${t('badgePinned', locale)}</span>`}
+        <button class="icon-btn pin-btn" onClick=${() => onPin(c)} title=${c.meta?.pinned ? 'Unpin' : 'Pin'} style="border:none; background:transparent; cursor:pointer; padding: 2px 6px;">
+          <i class="fa-solid fa-thumb-tack" style="color: ${c.meta?.pinned ? 'var(--accent)' : 'var(--text-muted)'};"></i>
+        </button>
       </div>
 
       <div class="card-meta">
