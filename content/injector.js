@@ -1,6 +1,7 @@
 // content/injector.js — Injects the Kairo button next to chat inputs and handles the capture/inject menu
 
 import { buildInjectionText, insertTextIntoEditor } from '../shared/inject.js';
+import { showCaptureToast } from '../shared/toast.js';
 
 let buttonWrapper = null;
 let currentTextarea = null;
@@ -129,7 +130,8 @@ export function injectButton(onCapture) {
     }
   });
 
-  // Shared capture routine — used by the menu AND the global trigger.
+
+// Shared capture routine — used by the menu AND the global trigger.
   let capturing = false;
   async function runCapture() {
     if (capturing) return;
@@ -140,11 +142,13 @@ export function injectButton(onCapture) {
       if (success === false) {
         captureOpt.textContent = 'Capture';
         capturing = false;
-        return;
+        return; // user cancelled (e.g. dismissed the name prompt) — not a failure
       }
       captureOpt.textContent = 'Saved';
+      showCaptureToast('success', 'Capsule saved');
     } catch (err) {
       captureOpt.textContent = 'Failed';
+      showCaptureToast('error', err?.message ? `Capture failed: ${err.message}` : 'Capture failed');
       console.error('[Kairo] Capture error:', err);
     }
     setTimeout(() => {
@@ -222,7 +226,7 @@ export function injectButton(onCapture) {
   });
 
   // Start tracking the chat input area
-  trackInputArea();
+  trackInputArea(menu, modal);
 
   // Expose the capture trigger for keyboard shortcut + context menu.
   // The service worker invokes this inside the content script isolated world.
@@ -240,9 +244,13 @@ export function registerCaptureTrigger(onCapture) {
     if (capturing) return;
     capturing = true;
     try {
-      await onCapture();
+      const success = await onCapture();
+      if (success !== false) {
+        showCaptureToast('success', 'Capsule saved');
+      }
     } catch (err) {
       console.error('[Kairo] Capture error:', err);
+      showCaptureToast('error', err?.message ? `Capture failed: ${err.message}` : 'Capture failed');
     } finally {
       capturing = false;
     }
@@ -266,7 +274,7 @@ function styleMenuOption(opt) {
   opt.addEventListener('mouseleave', () => opt.style.background = 'transparent');
 }
 
-function trackInputArea() {
+function trackInputArea(menu, modal) {
   const findInput = () => {
     // Selectors for chat inputs across platforms
     const selectors = [
