@@ -18,7 +18,8 @@
     "https://gemini.google.com/*",
     "https://chat.deepseek.com/*",
     "https://api.anthropic.com/*",
-    "https://api.notion.com/*"
+    "https://api.notion.com/*",
+    "https://generativelanguage.googleapis.com/*"
   ],
   "background": {
     "service_worker": "background/service-worker.js",
