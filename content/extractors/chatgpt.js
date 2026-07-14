@@ -94,6 +94,16 @@ export default {
       }));
     }
 
+    // Strategy 1.5: data-message-id — stable in newer ChatGPT UI
+    turns = [...root.querySelectorAll('[data-message-id]')];
+    if (turns.length) {
+      console.log(`[Kairo Extractor] ChatGPT: ${turns.length} turns (data-message-id)`);
+      return turns.map(el => ({
+        role: detectRole(el),
+        text: el.innerText.trim(),
+      })).filter(t => t.text.length > 0 && t.role !== 'unknown');
+    }
+
     // Strategy 2: article[data-testid="conversation-turn-*"]
     turns = [...root.querySelectorAll('article[data-testid^="conversation-turn"]')];
     if (turns.length) {
