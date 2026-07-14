@@ -4,6 +4,7 @@ import { h, render } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
 import { html } from 'htm/preact';
 import { DEFAULT_SETTINGS, normalizeSettings } from '../shared/settings.js';
+import { validateCapsule } from '../shared/capsule.js';
 
 function OptionsPage() {
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
@@ -105,17 +106,27 @@ function OptionsPage() {
           return;
         }
 
+        const validCapsules = capsules.filter(c => {
+          const validation = validateCapsule(c);
+          return validation.valid;
+        });
+
+        if (validCapsules.length === 0) {
+          showToast('Invalid file format: No valid capsules found');
+          return;
+        }
+
         let imported = 0;
         const saveNext = (i) => {
-          if (i >= capsules.length) {
+          if (i >= validCapsules.length) {
             showToast(`Imported ${imported} capsules`);
             setCapsuleCount(prev => prev + imported);
             return;
           }
           const importedCapsule = {
-            ...capsules[i],
+            ...validCapsules[i],
             id: crypto.randomUUID(),
-            meta: { ...(capsules[i].meta || {}), importedAt: Date.now() }
+            meta: { ...(validCapsules[i].meta || {}), importedAt: Date.now() }
           };
           chrome.runtime.sendMessage({
             type: 'SAVE_CAPSULE',
