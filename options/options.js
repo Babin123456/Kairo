@@ -172,6 +172,24 @@ function OptionsPage() {
     });
   };
 
+  // Reset settings to defaults
+  const handleResetSettings = () => {
+    if (!confirm('Are you sure you want to reset all settings to defaults?')) return;
+    chrome.runtime.sendMessage({ type: 'SAVE_SETTINGS', settings: DEFAULT_SETTINGS }, (res) => {
+      if (chrome.runtime.lastError) {
+        console.error('[Kairo Options] SAVE_SETTINGS failed:', chrome.runtime.lastError.message);
+        showToast('Failed to reset settings');
+        return;
+      }
+      if (res?.success) {
+        setSettings(DEFAULT_SETTINGS);
+        showToast('Settings reset to defaults');
+      } else {
+        showToast('Failed to reset settings');
+      }
+    });
+  };
+
   return html`
     <div class="options-container">
 
@@ -276,9 +294,14 @@ function OptionsPage() {
       <div class="section danger-section" id="section-danger">
         <div class="section-title">Danger Zone</div>
         <div class="section-desc">Irreversible actions. Proceed with caution.</div>
-        <button class="btn btn-danger" onClick=${handleClearAll} id="clear-all-btn">
-          Delete All Capsules
-        </button>
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+          <button class="btn btn-danger" onClick=${handleClearAll} id="clear-all-btn">
+            Delete All Capsules
+          </button>
+          <button class="btn btn-danger" style="background: transparent; color: var(--danger); border: 1px solid var(--danger);" onClick=${handleResetSettings} id="reset-settings-btn">
+            Reset Settings
+          </button>
+        </div>
       </div>
 
       <!-- Keyboard Shortcuts Info -->
