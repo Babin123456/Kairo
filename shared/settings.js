@@ -14,6 +14,8 @@ export const DEFAULT_SETTINGS = {
   enrichEngine: 'claude',
   geminiApiKey: '',
   injectionTemplate: '',
+  autoBackup: false,
+  lastBackupTime: 0,
 };
 
 export function normalizeSettings(settings = {}) {
@@ -33,5 +35,7 @@ export function normalizeSettings(settings = {}) {
     enrichEngine: typeof settings.enrichEngine === 'string' ? settings.enrichEngine : 'claude',
     geminiApiKey: typeof settings.geminiApiKey === 'string' ? settings.geminiApiKey.trim() : '',
     injectionTemplate: typeof settings.injectionTemplate === 'string' ? settings.injectionTemplate : '',
+    autoBackup: settings.autoBackup === true,
+    lastBackupTime: typeof settings.lastBackupTime === 'number' ? settings.lastBackupTime : 0,
   };
 }

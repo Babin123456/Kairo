@@ -135,6 +135,39 @@ function Popup() {
     });
   }, []);
 
+  // Trigger weekly backup if enabled and due
+  useEffect(() => {
+    if (loading || !settings.autoBackup) return;
+    const sevenDays = 7 * 24 * 60 * 60 * 1000;
+    if (Date.now() - (settings.lastBackupTime || 0) >= sevenDays) {
+      if (capsules.length > 0) {
+        const dataStr = JSON.stringify({
+          version: '1.0.0',
+          exportedAt: Date.now(),
+          capsules
+        }, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `kairo-weekly-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        const updatedSettings = { ...settings, lastBackupTime: Date.now() };
+        chrome.runtime.sendMessage({
+          type: 'SAVE_SETTINGS',
+          settings: updatedSettings
+        }, () => {
+          setSettings(updatedSettings);
+          showToast(settings.locale === 'es' ? 'Copia de seguridad semanal exportada' : 'Weekly backup exported automatically');
+        });
+      }
+    }
+  }, [loading, settings.autoBackup, settings.lastBackupTime, capsules, settings.locale]);
+
   const loc = settings.locale;
 
   // Filter logic

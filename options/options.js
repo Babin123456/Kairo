@@ -563,6 +563,24 @@ function OptionsPage() {
           <div class="section" id="section-data">
             <div class="section-title">${t('dataManagementSection', loc)}</div>
             <div class="section-desc">${t('dataManagementDesc', loc)}</div>
+
+            <!-- Automated Weekly Backup Toggle -->
+            <div class="toggle-row" style="border-bottom: 1px solid var(--border-subtle); margin-bottom: 12px; padding-bottom: 12px;">
+              <div class="toggle-info">
+                <div class="toggle-label">Automated weekly backups</div>
+                <div class="toggle-desc">Automatically trigger a JSON backup export once every 7 days when launching the extension popup.</div>
+              </div>
+              <label class="toggle-switch">
+                <input
+                  type="checkbox"
+                  checked=${settings.autoBackup}
+                  onChange=${e => setSettings({ ...settings, autoBackup: e.target.checked })}
+                  id="toggle-auto-backup"
+                />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
             <div class="btn-row">
               <button class="btn" onClick=${handleExport} id="export-btn">
                 ${t('exportBtn', loc)}
