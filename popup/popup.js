@@ -7,6 +7,29 @@ import { timeAgo, truncate, platformName } from '../shared/utils.js';
 import { buildInjectionText } from '../shared/inject.js';
 import { t } from '../shared/i18n.js';
 
+function buildFolderTree(folders) {
+  const root = {};
+  folders.forEach(f => {
+    const parts = f.split('/');
+    let current = root;
+    parts.forEach(part => {
+      if (!current[part]) {
+        current[part] = { name: part, fullPath: '', children: {} };
+      }
+      current = current[part].children;
+    });
+  });
+  const setPaths = (node, parentPath = '') => {
+    Object.keys(node).forEach(key => {
+      const path = parentPath ? `${parentPath}/${key}` : key;
+      node[key].fullPath = path;
+      setPaths(node[key].children, path);
+    });
+  };
+  setPaths(root);
+  return root;
+}
+
 // ─── Main Popup Component ───────────────────────────────────────
 function Popup() {
   const [capsules, setCapsules] = useState([]);
@@ -22,6 +45,48 @@ function Popup() {
     notionEnabled: false,
   });
   const [activeDateFilter, setActiveDateFilter] = useState('all');
+  const [expandedFolders, setExpandedFolders] = useState({});
+
+  const toggleFolder = useCallback((path) => {
+    setExpandedFolders(prev => ({ ...prev, [path]: !prev[path] }));
+  }, []);
+
+  const renderFolderNode = (node, depth = 0) => {
+    return Object.values(node).map(item => {
+      const hasChildren = Object.keys(item.children).length > 0;
+      const isExpanded = expandedFolders[item.fullPath];
+      const isSelected = activeFolder === item.fullPath;
+      return html`
+        <div key=${item.fullPath} style="margin-left: ${depth * 8}px; display: flex; flex-direction: column;">
+          <div style="display: flex; align-items: center; gap: 4px; padding: 2px 0;">
+            ${hasChildren ? html`
+              <button 
+                class="icon-btn" 
+                style="padding: 2px; font-size: 8px; background: transparent; border: none; cursor: pointer; display: flex; align-items: center;" 
+                onClick=${(e) => { e.stopPropagation(); toggleFolder(item.fullPath); }}
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: ${isExpanded ? 'rotate(90deg)' : 'none'}; transition: transform 0.15s ease;">
+                  <path d="M9 18l6-6-6-6"></path>
+                </svg>
+              </button>
+            ` : html`<span style="width: 14px;"></span>`}
+            <button
+              class="filter-chip ${isSelected ? 'active' : ''}"
+              onClick=${() => setActiveFolder(isSelected ? null : item.fullPath)}
+              style="padding: 2px 6px; font-size: 11px; margin: 2px 0; border-radius: var(--radius-sm);"
+            >
+              ${item.name}
+            </button>
+          </div>
+          ${hasChildren && isExpanded && html`
+            <div style="border-left: 1px solid var(--border-subtle); margin-left: 6px;">
+              ${renderFolderNode(item.children, depth + 1)}
+            </div>
+          `}
+        </div>
+      `;
+    });
+  };
 
   // Load settings + capsules on mount
   useEffect(() => {
@@ -276,14 +341,9 @@ function Popup() {
 
     <!-- Folder Filters -->
     ${folders.length > 0 && html`
-      <div class="filters" style="padding-top: 0;">
-        ${folders.map(f => html`
-          <button
-            key=${f}
-            class="filter-chip ${activeFolder === f ? 'active' : ''}"
-            onClick=${() => setActiveFolder(activeFolder === f ? null : f)}
-          >${t('filterFolder', loc, { folder: f })}</button>
-        `)}
+      <div class="filters" style="padding-top: 0; display: block; padding-left: 16px; padding-right: 16px; margin-bottom: 8px;">
+        <div style="font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">Folders:</div>
+        ${renderFolderNode(buildFolderTree(folders))}
       </div>
     `}
 
