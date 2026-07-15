@@ -225,6 +225,19 @@ function Popup() {
     }
   }, [loc, settings.injectionTemplate]);
 
+  // ─── Copy raw transcript ───────────────────────────────────
+  const handleCopyRaw = useCallback(async (capsule) => {
+    try {
+      const turns = capsule.content?.rawTurns || [];
+      const text = turns.map(t => `[${t.role.toUpperCase()}]: ${t.text}`).join('\n\n');
+      await navigator.clipboard.writeText(text);
+      showToast(loc === 'es' ? 'Transcripción copiada' : 'Raw transcript copied');
+    } catch (err) {
+      console.error('[Kairo Popup] Copy raw failed:', err);
+      showToast(loc === 'es' ? 'Error al copiar' : 'Copy failed');
+    }
+  }, [loc]);
+
   // ─── Inject into active tab ────────────────────────────────
   const handleInject = useCallback(async (capsule, options = {}) => {
     try {
@@ -489,6 +502,7 @@ function Popup() {
           searchQuery=${query}
           notionEnabled=${settings.notionEnabled}
           onCopy=${handleCopy}
+          onCopyRaw=${handleCopyRaw}
           onInject=${handleInject}
           onNotion=${handleNotionExport}
           onPin=${handlePin}
@@ -534,7 +548,7 @@ function Popup() {
   `;
 }
 
-function CapsuleCard({ capsule, locale, notionEnabled, searchQuery, onCopy, onInject, onNotion, onPin, onExportSingle, onDelete }) {
+function CapsuleCard({ capsule, locale, notionEnabled, searchQuery, onCopy, onCopyRaw, onInject, onNotion, onPin, onExportSingle, onDelete }) {
   const c = capsule;
   const summaryText = c.content?.summary || c.content?.rawSnippet || '';
   const [includeReasoning, setIncludeReasoning] = useState(false);
@@ -610,6 +624,9 @@ function CapsuleCard({ capsule, locale, notionEnabled, searchQuery, onCopy, onIn
             ${t('notionBtn', locale)}
           </button>
         `}
+        <button class="card-btn" onClick=${() => onCopyRaw(c)} title=${locale === 'es' ? 'Copiar transcripción' : 'Copy transcript'} style="padding: 4px 6px;">
+          <i class="fa-solid fa-file-lines" style="color: rgb(147, 162, 187);"></i>
+        </button>
         <button class="card-btn" onClick=${() => onExportSingle(c)} title="Download JSON" style="padding: 4px 6px;">
           <i class="fa-solid fa-download" style="color: rgb(147, 162, 187);"></i>
         </button>
