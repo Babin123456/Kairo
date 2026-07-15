@@ -94,6 +94,23 @@ function OptionsPage() {
     });
   };
 
+  // Compact / Optimize Database
+  const handleCompaction = () => {
+    chrome.runtime.sendMessage({ type: 'COMPACT_DATABASE' }, (res) => {
+      if (res?.success) {
+        showToast(settings.locale === 'es' ? `Base de datos optimizada. Se eliminaron ${res.removedCount || 0} entradas.` : `Database optimized! Removed ${res.removedCount || 0} invalid entries.`);
+        chrome.runtime.sendMessage({ type: 'GET_CAPSULES' }, (resCaps) => {
+          if (Array.isArray(resCaps)) {
+            setCapsules(resCaps);
+            setCapsuleCount(resCaps.length);
+          }
+        });
+      } else {
+        showToast(res?.error || 'Compaction failed');
+      }
+    });
+  };
+
   // Import capsules from JSON
   const handleImport = () => {
     document.getElementById('import-file').click();
@@ -597,6 +614,9 @@ function OptionsPage() {
               </button>
               <button class="btn" onClick=${handleImport} id="import-btn">
                 ${t('importBtn', loc)}
+              </button>
+              <button class="btn" onClick=${handleCompaction} id="compact-btn" style="background: rgba(108,71,255,0.06); border-color: rgba(108,71,255,0.15);">
+                Optimize Database
               </button>
               <input
                 class="file-input"

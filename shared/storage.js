@@ -188,3 +188,39 @@ export async function clearAllCapsules() {
     return { success: false, error: err.message };
   }
 }
+
+/**
+ * Dedupes, cleans invalid structures, and optimizes storage.
+ */
+export async function compactDatabase() {
+  return enqueueMutation(async () => {
+    try {
+      const localRes = await chrome.storage.local.get(STORAGE_KEY);
+      let localCaps = localRes[STORAGE_KEY] || [];
+      const initialCount = localCaps.length;
+
+      // Filter invalid structures
+      localCaps = localCaps.filter(c => {
+        if (!c || typeof c !== 'object') return false;
+        return typeof c.id === 'string' && typeof c.source === 'string' && typeof c.content === 'object';
+      });
+
+      // Deduplicate by ID
+      const seen = new Set();
+      localCaps = localCaps.filter(c => {
+        if (seen.has(c.id)) return false;
+        seen.add(c.id);
+        return true;
+      });
+
+      await chrome.storage.local.set({ [STORAGE_KEY]: localCaps });
+      await syncLocalPinnedToSync();
+
+      const optimizedCount = localCaps.length;
+      return { success: true, optimizedCount, removedCount: initialCount - optimizedCount };
+    } catch (err) {
+      console.error('[Kairo] Compaction error:', err);
+      return { success: false, error: err.message };
+    }
+  });
+}
