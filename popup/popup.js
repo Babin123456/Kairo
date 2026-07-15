@@ -61,6 +61,7 @@ function Popup() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [toastMsg, setToastMsg] = useState('');
   const [loading, setLoading] = useState(true);
+  const [selectedIds, setSelectedIds] = useState([]);
   const [settings, setSettings] = useState({
     locale: 'en',
     theme: 'dark',
@@ -299,6 +300,95 @@ function Popup() {
     });
   }, [loc]);
 
+  // ─── Bulk Operations ───────────────────────────────────────
+  const handleBulkDelete = useCallback(() => {
+    if (!confirm(`Delete ${selectedIds.length} selected capsules?`)) return;
+    showToast('Deleting...');
+    let completed = 0;
+    selectedIds.forEach(id => {
+      chrome.runtime.sendMessage({ type: 'DELETE_CAPSULE', id }, (res) => {
+        completed++;
+        if (completed === selectedIds.length) {
+          chrome.runtime.sendMessage({ type: 'GET_CAPSULES' }, (res2) => {
+            if (Array.isArray(res2)) setCapsules(res2);
+            setSelectedIds([]);
+            showToast('Deleted successfully');
+          });
+        }
+      });
+    });
+  }, [selectedIds]);
+
+  const handleBulkTag = useCallback(() => {
+    const tag = prompt('Enter tag to add to selected capsules:');
+    if (!tag || !tag.trim()) return;
+    const cleanTag = tag.trim();
+    showToast('Applying tag...');
+    let completed = 0;
+    selectedIds.forEach(id => {
+      const c = capsules.find(cap => cap.id === id);
+      if (!c) {
+        completed++;
+        return;
+      }
+      const existingTags = c.meta?.tags || [];
+      if (existingTags.includes(cleanTag)) {
+        completed++;
+        if (completed === selectedIds.length) {
+          setSelectedIds([]);
+          showToast('Applied tags');
+        }
+        return;
+      }
+      const updatedTags = [...existingTags, cleanTag];
+      const updatedMeta = { ...(c.meta || {}), tags: updatedTags };
+      chrome.runtime.sendMessage({
+        type: 'UPDATE_CAPSULE',
+        id,
+        updates: { meta: updatedMeta }
+      }, () => {
+        completed++;
+        if (completed === selectedIds.length) {
+          chrome.runtime.sendMessage({ type: 'GET_CAPSULES' }, (res2) => {
+            if (Array.isArray(res2)) setCapsules(res2);
+            setSelectedIds([]);
+            showToast('Applied tags');
+          });
+        }
+      });
+    });
+  }, [selectedIds, capsules]);
+
+  const handleBulkFolder = useCallback(() => {
+    const folder = prompt('Enter folder name (use slash / for subfolders):');
+    if (folder === null) return;
+    const cleanFolder = folder.trim() || null;
+    showToast('Moving capsules...');
+    let completed = 0;
+    selectedIds.forEach(id => {
+      const c = capsules.find(cap => cap.id === id);
+      if (!c) {
+        completed++;
+        return;
+      }
+      const updatedMeta = { ...(c.meta || {}), folder: cleanFolder };
+      chrome.runtime.sendMessage({
+        type: 'UPDATE_CAPSULE',
+        id,
+        updates: { meta: updatedMeta }
+      }, () => {
+        completed++;
+        if (completed === selectedIds.length) {
+          chrome.runtime.sendMessage({ type: 'GET_CAPSULES' }, (res2) => {
+            if (Array.isArray(res2)) setCapsules(res2);
+            setSelectedIds([]);
+            showToast('Moved successfully');
+          });
+        }
+      });
+    });
+  }, [selectedIds, capsules]);
+
   // ─── Export all capsules as JSON ───────────────────────────
   const handleExport = () => {
     if (capsules.length === 0) {
@@ -485,6 +575,56 @@ function Popup() {
       ${capsules.length > 0 && html`<span>${capsules.length}${t('totalSuffix', loc)}</span>`}
     </div>
 
+    <!-- Bulk Actions Panel -->
+    ${selectedIds.length > 0 && html`
+      <div class="bulk-panel" style="
+        background: rgba(108, 71, 255, 0.08);
+        border: 1px solid rgba(108, 71, 255, 0.2);
+        border-radius: var(--radius-sm);
+        padding: 8px 12px;
+        margin: 8px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 11px;
+      ">
+        <span style="font-weight: 600; color: var(--text-primary);">
+          ${selectedIds.length} selected
+        </span>
+        <div style="display: flex; gap: 6px;">
+          <button 
+            class="card-btn" 
+            onClick=${handleBulkDelete}
+            style="background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); color: #ef4444; padding: 2px 6px;"
+          >
+            Delete
+          </button>
+          <button 
+            class="card-btn" 
+            onClick=${handleBulkTag}
+            style="padding: 2px 6px;"
+          >
+            Tag
+          </button>
+          <button 
+            class="card-btn" 
+            onClick=${handleBulkFolder}
+            style="padding: 2px 6px;"
+          >
+            Move
+          </button>
+          <button 
+            class="card-btn" 
+            onClick=${() => setSelectedIds([])}
+            style="background: transparent; border-color: transparent; padding: 2px 6px;"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    `}
+
     <!-- Capsule List -->
     <div class="capsule-list" id="kairo-capsule-list">
       ${loading && html`
@@ -519,6 +659,11 @@ function Popup() {
           capsule=${c}
           locale=${loc}
           searchQuery=${query}
+          isSelected=${selectedIds.includes(c.id)}
+          onToggleSelect=${(id, checked) => {
+            if (checked) setSelectedIds(prev => [...prev, id]);
+            else setSelectedIds(prev => prev.filter(x => x !== id));
+          }}
           notionEnabled=${settings.notionEnabled}
           onCopy=${handleCopy}
           onCopyRaw=${handleCopyRaw}
@@ -567,7 +712,7 @@ function Popup() {
   `;
 }
 
-function CapsuleCard({ capsule, locale, notionEnabled, searchQuery, onCopy, onCopyRaw, onInject, onNotion, onPin, onExportSingle, onDelete }) {
+function CapsuleCard({ capsule, locale, notionEnabled, searchQuery, isSelected, onToggleSelect, onCopy, onCopyRaw, onInject, onNotion, onPin, onExportSingle, onDelete }) {
   const c = capsule;
   const summaryText = c.content?.summary || c.content?.rawSnippet || '';
   const [includeReasoning, setIncludeReasoning] = useState(false);
@@ -590,8 +735,15 @@ function CapsuleCard({ capsule, locale, notionEnabled, searchQuery, onCopy, onCo
 
   return html`
     <div class="capsule-card" id="capsule-${c.id?.slice(0, 8)}" tabindex="0" onKeyDown=${handleKeyDown}>
-      <div class="card-header">
-        <div class="card-title">${highlightMatch(c.title || t('untitledCapsule', locale), searchQuery)}</div>
+      <div class="card-header" style="display: flex; align-items: center; gap: 8px;">
+        <input 
+          type="checkbox" 
+          checked=${isSelected} 
+          onChange=${e => onToggleSelect(c.id, e.target.checked)} 
+          style="cursor: pointer; margin: 0; width: 13px; height: 13px;"
+          onClick=${e => e.stopPropagation()}
+        />
+        <div class="card-title" style="flex: 1;">${highlightMatch(c.title || t('untitledCapsule', locale), searchQuery)}</div>
         <button class="icon-btn pin-btn" onClick=${() => onPin(c)} title=${c.meta?.pinned ? 'Unpin' : 'Pin'} style="border:none; background:transparent; cursor:pointer; padding: 2px 6px;">
           <i class="fa-solid fa-thumb-tack" style="color: ${c.meta?.pinned ? 'var(--accent)' : 'var(--text-muted)'};"></i>
         </button>
