@@ -19,7 +19,15 @@ function OptionsPage() {
   useEffect(() => {
     chrome.runtime.sendMessage({ type: 'GET_SETTINGS' }, (res) => {
       if (res && typeof res === 'object') {
-        setSettings(prev => normalizeSettings({ ...prev, ...res }));
+        const normalized = normalizeSettings({ ...DEFAULT_SETTINGS, ...res });
+        if (!res.hasOwnProperty('theme')) {
+          const systemTheme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+          normalized.theme = systemTheme;
+        }
+        setSettings(normalized);
+      } else {
+        const systemTheme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        setSettings({ ...DEFAULT_SETTINGS, theme: systemTheme });
       }
     });
 

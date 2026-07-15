@@ -27,8 +27,16 @@ function Popup() {
   useEffect(() => {
     chrome.runtime.sendMessage({ type: 'GET_SETTINGS' }, (res) => {
       if (res && typeof res === 'object') {
-        setSettings(prev => ({ ...prev, ...res }));
-        document.body.className = res.theme === 'light' ? 'light-theme' : '';
+        let theme = res.theme;
+        if (!res.hasOwnProperty('theme')) {
+          theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        }
+        setSettings(prev => ({ ...prev, ...res, theme }));
+        document.body.className = theme === 'light' ? 'light-theme' : '';
+      } else {
+        const theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        setSettings(prev => ({ ...prev, theme }));
+        document.body.className = theme === 'light' ? 'light-theme' : '';
       }
     });
 
