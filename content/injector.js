@@ -282,6 +282,20 @@ function styleMenuOption(opt) {
   opt.addEventListener('mouseleave', () => opt.style.background = 'transparent');
 }
 
+function querySelectorShadow(root, selector) {
+  const found = root.querySelector(selector);
+  if (found) return found;
+
+  const elements = root.querySelectorAll('*');
+  for (const el of elements) {
+    if (el.shadowRoot) {
+      const inner = querySelectorShadow(el.shadowRoot, selector);
+      if (inner) return inner;
+    }
+  }
+  return null;
+}
+
 function trackInputArea() {
   const findInput = () => {
     // Selectors for chat inputs across platforms
@@ -296,7 +310,7 @@ function trackInputArea() {
     ];
 
     for (const sel of selectors) {
-      const el = document.querySelector(sel);
+      const el = querySelectorShadow(document, sel);
       if (el) return el;
     }
     return null;

@@ -249,6 +249,20 @@ const MESSAGE_HANDLERS = {
         func: (contextText) => {
           if (!contextText) return false;
 
+          function querySelectorShadow(root, selector) {
+            const found = root.querySelector(selector);
+            if (found) return found;
+
+            const elements = root.querySelectorAll('*');
+            for (const el of elements) {
+              if (el.shadowRoot) {
+                const inner = querySelectorShadow(el.shadowRoot, selector);
+                if (inner) return inner;
+              }
+            }
+            return null;
+          }
+
           const selectors = [
             'div[contenteditable="true"]',
             '#prompt-textarea',
@@ -258,7 +272,7 @@ const MESSAGE_HANDLERS = {
           ];
           let el = null;
           for (const sel of selectors) {
-            el = document.querySelector(sel);
+            el = querySelectorShadow(document, sel);
             if (el) break;
           }
           if (!el) return false;
