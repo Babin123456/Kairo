@@ -54,6 +54,9 @@ function highlightMatch(text, query) {
 
 // ─── Main Popup Component ───────────────────────────────────────
 function Popup() {
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
   const [capsules, setCapsules] = useState([]);
   const [query, setQuery] = useState('');
   const [activeFolder, setActiveFolder] = useState(null);
@@ -427,6 +430,58 @@ function Popup() {
     showToast('Capsule exported');
   };
 
+  const toggleSelectMode = () => {
+  setSelectMode(prev => !prev);
+  setSelectedIds(new Set());
+};
+
+const toggleSelected = useCallback((id) => {
+  setSelectedIds(prev => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    return next;
+  });
+}, []);
+
+const selectAllVisible = () => {
+  setSelectedIds(new Set(sorted.map(c => c.id)));
+};
+
+const clearSelection = () => setSelectedIds(new Set());
+
+const handleBulkDelete = useCallback(() => {
+  const ids = [...selectedIds];
+  chrome.runtime.sendMessage({ type: 'DELETE_CAPSULES', ids }, (res) => {
+    if (chrome.runtime.lastError) {
+      console.error('[Kairo Popup] DELETE_CAPSULES failed:', chrome.runtime.lastError.message);
+      showToast('Bulk delete failed');
+      setBulkDeleteConfirm(false);
+      return;
+    }
+    if (res?.success) {
+      setCapsules(prev => prev.filter(c => !ids.includes(c.id)));
+      showToast(`${ids.length} capsule${ids.length !== 1 ? 's' : ''} deleted`);
+      setSelectedIds(new Set());
+    } else {
+      showToast('Bulk delete failed');
+    }
+    setBulkDeleteConfirm(false);
+  });
+}, [selectedIds]);
+
+const handleBulkExport = useCallback(() => {
+  const toExport = capsules.filter(c => selectedIds.has(c.id));
+  const blob = new Blob([JSON.stringify(toExport, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `kairo-export-${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`Exported ${toExport.length} capsule${toExport.length !== 1 ? 's' : ''}`);
+}, [capsules, selectedIds]);
+
   // ─── Open options page ─────────────────────────────────────
   const openOptions = () => {
     chrome.runtime.openOptionsPage();
@@ -672,6 +727,9 @@ function Popup() {
           onPin=${handlePin}
           onExportSingle=${handleExportSingle}
           onDelete=${() => setDeleteTarget(c.id)}
+          selectMode=${selectMode}
+          selected=${selectedIds.has(c.id)}
+          onToggleSelect=${() => toggleSelected(c.id)}
         />
       `)}
     </div>
@@ -685,6 +743,20 @@ function Popup() {
           <div class="confirm-actions">
             <button class="confirm-btn" onClick=${() => setDeleteTarget(null)}>${t('btnCancel', loc)}</button>
             <button class="confirm-btn danger" onClick=${() => handleDelete(deleteTarget)}>${t('btnDelete', loc)}</button>
+          </div>
+        </div>
+      </div>
+    `}
+
+    <!-- Bulk Delete Confirmation -->
+    ${bulkDeleteConfirm && html`
+      <div class="confirm-overlay" onClick=${() => setBulkDeleteConfirm(false)}>
+        <div class="confirm-dialog" role="dialog" aria-modal="true" onClick=${e => e.stopPropagation()}>
+          <div class="confirm-title">Delete ${selectedIds.size} capsule${selectedIds.size !== 1 ? 's' : ''}?</div>
+          <div class="confirm-text">This action cannot be undone.</div>
+          <div class="confirm-actions">
+            <button class="confirm-btn" onClick=${() => setBulkDeleteConfirm(false)}>Cancel</button>
+            <button class="confirm-btn danger" onClick=${handleBulkDelete}>Delete</button>
           </div>
         </div>
       </div>
@@ -712,6 +784,7 @@ function Popup() {
   `;
 }
 
+// ─── Capsule Card Component ─────────────────────────────────────
 function CapsuleCard({ capsule, locale, notionEnabled, searchQuery, isSelected, onToggleSelect, onCopy, onCopyRaw, onInject, onNotion, onPin, onExportSingle, onDelete }) {
   const c = capsule;
   const summaryText = c.content?.summary || c.content?.rawSnippet || '';
@@ -811,3 +884,4 @@ function CapsuleCard({ capsule, locale, notionEnabled, searchQuery, isSelected, 
 
 // ─── Mount ──────────────────────────────────────────────────────
 render(html`<${Popup} />`, document.getElementById('root'));
+
