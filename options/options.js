@@ -107,7 +107,17 @@ function OptionsPage() {
     reader.onload = (evt) => {
       try {
         const parsed = JSON.parse(evt.target.result);
-        const importedCapsules = parsed.capsules || parsed;
+        if (!parsed) {
+          showToast(t('toastImportInvalid', settings.locale));
+          return;
+        }
+
+        let importedCapsules = parsed.capsules || parsed;
+        if (importedCapsules && !Array.isArray(importedCapsules) && typeof importedCapsules === 'object') {
+          if (importedCapsules.id && importedCapsules.source) {
+            importedCapsules = [importedCapsules];
+          }
+        }
 
         if (!Array.isArray(importedCapsules)) {
           showToast(t('toastImportInvalid', settings.locale));
